@@ -11,6 +11,7 @@ export class NotificationService {
   async createKeywordNotification(createNotificationDto: CreateNotificationDto) {
     return this.prisma.notification.create({
       data: {
+        userId: createNotificationDto.userId,
         author: createNotificationDto.author,
         keyword: createNotificationDto.keyword,
       },
@@ -19,18 +20,23 @@ export class NotificationService {
   
   // Check for keyword matches in boards and send notifications
   async checkForKeywordNotificationsInBoard(board: CreateBoardDto) {
-    const notifications = await this.prisma.notification.findMany();
+    const notifications = await this.prisma.notification.findMany({
+      where: {
+        OR: [
+          { author: { equals: board.author } },   // Condition for author
+          { keyword: { contains: board.title } }   // Condition for keyword
+        ]
+      }
+    });
 
     for (const notification of notifications) {
-      if (board.title.includes(notification.keyword) || board.content.includes(notification.keyword)) {
-        this.sendNotification(notification.author, board.title, 'board');
-      }
+      this.sendNotification(notification.author, board.title, notification.userId);
     }
   }
 
   // Mock notification function
-  private sendNotification(author: string, content: string, type: 'board' | 'comment') {
+  private sendNotification(author: string, title: string, toUser: number ) {
     // Log the notification for now (this is where the actual notification logic would go)
-    console.log(`Notification sent to ${author} about ${type}: "${content}"`);
+    console.log(`Notification sent to ${toUser} about author: "${author}", about title: "${title}"`);
   }
 }

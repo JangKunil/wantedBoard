@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"  // MySQL as the database provider
-  url      = env("DATABASE_URL")  // Database connection URL from the .env file
+  provider = "mysql" // MySQL as the database provider
+  url      = env("DATABASE_URL") // Database connection URL from the .env file
 }
 
 model Board {
@@ -19,17 +19,20 @@ model Board {
 }
 
 model Comment {
-  id        Int       @id @default(autoincrement())
-  content   String
-  author    String
-  createdAt DateTime  @default(now())
-  boardId    Int
-  parentCommentId Int
-  replies   Comment[]  @relation("CommentReplies")
+  id              Int       @id @default(autoincrement())
+  content         String
+  author          String
+  createdAt       DateTime  @default(now())
+  boardId         Int // Foreign key to Board
+  board           Board     @relation(fields: [boardId], references: [id]) // Relation back to Board
+  parentCommentId Int?
+  replies         Comment[] @relation("CommentReplies")
+  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id]) // For nested comments
 }
 
 model Notification {
   id      Int    @id @default(autoincrement())
+  userId  Int
   author  String
   keyword String
 }

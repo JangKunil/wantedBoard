@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBoardDto, UpdateBoardDto } from '../dto/board.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class BoardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationService: NotificationService,
+  ) {}
 
   async findAll(page: number) {
     const skip = (page - 1) * 10;
@@ -45,9 +49,14 @@ export class BoardService {
   }
 
   async create(createBoardDto: CreateBoardDto) {
-    return this.prisma.board.create({
+    const board = await this.prisma.board.create({
       data: createBoardDto,
     });
+
+    // Check for keyword notifications
+    await this.notificationService.checkForKeywordNotificationsInBoard(board);
+
+    return board;
   }
 
   async update(id: number, updateBoardDto: UpdateBoardDto) {
